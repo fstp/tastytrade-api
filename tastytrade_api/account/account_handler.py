@@ -23,8 +23,7 @@ class TastytradeAccount:
         raise AccountError(
             f"\n{msg}\n"
             f"url: {self.url}\n"
-            f"session_token: {self.session_token}\n"
-            f"user_data: {self.user_data}\n"
+            f"headers: {self.headers}\n"
             f"status_code: {response.status_code}\n"
             f"reason: {response.reason}\n"
             f"text: {response.text}"
