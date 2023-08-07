@@ -1,22 +1,34 @@
 import requests
 import json
-
+from .exceptions import AccountError
 
 class TastytradeAccount:
     """
-    Initializes a new instance of the API client with the given session token and API URL.
+    Initializes a new instance of the API client with the given session object.
 
     Args:
-        session_token (str): The session token used to authenticate API requests.
-        api_url (str): The base URL of the API.
+        auth (TastytradeAuth): Authenticated session object
 
-    Returns:
-        None
+    Raises:
+        ValidationError: If the session is invalid.
     """
 
-    def __init__(self, session_token, api_url):
-        self.session_token = session_token
-        self.api_url = api_url
+    def __init__(self, auth):
+        auth.validate_session()
+        self.session_token = auth.session_token
+        self.url = auth.url
+        self.headers = {"Authorization": f"{self.session_token}"}
+
+    def _raise_account_error(self, msg, response):
+        raise AccountError(
+            f"\n{msg}\n"
+            f"url: {self.url}\n"
+            f"session_token: {self.session_token}\n"
+            f"user_data: {self.user_data}\n"
+            f"status_code: {response.status_code}\n"
+            f"reason: {response.reason}\n"
+            f"text: {response.text}"
+        )
 
     def get_accounts(self):
         """
@@ -27,20 +39,17 @@ class TastytradeAccount:
             list: List of account objects, as returned by the API.
 
         Raises:
-            Exception: If there was an error in the GET request or if the status code is not 200 OK.
+            AccountError: If there was an error in the GET request or if the status code is not 200 OK.
         """
-        headers = {"Authorization": f"{self.session_token}"}
         response = requests.get(
-            f"{self.api_url}/customers/me/accounts", headers=headers
+            f"{self.url}/customers/me/accounts", headers=self.headers
         )
         if response.status_code == 200:
             response_data = json.loads(response.content)
             accounts = response_data["data"]["items"]
             return accounts
         else:
-            raise Exception(
-                f"Error getting accounts: {response.status_code} - {response.content}"
-            )
+            self._raise_account_error("Error getting accounts", response)
 
     def get_customer(self):
         """
@@ -51,18 +60,15 @@ class TastytradeAccount:
             dict: The customer object, as returned by the API.
 
         Raises:
-            Exception: If there was an error in the GET request or if the status code is not 200 OK.
+            AccountError: If there was an error in the GET request or if the status code is not 200 OK.
         """
-        headers = {"Authorization": f"{self.session_token}"}
-        response = requests.get(f"{self.api_url}/customers/me", headers=headers)
+        response = requests.get(f"{self.url}/customers/me", headers=self.headers)
         if response.status_code == 200:
             response_data = json.loads(response.content)
             customer = response_data["data"]
             return customer
         else:
-            raise Exception(
-                f"Error getting customer: {response.status_code} - {response.content}"
-            )
+            self._raise_account_error("Error getting customer", response)
 
     def get_customer_account(self, account_number):
         """
@@ -76,20 +82,17 @@ class TastytradeAccount:
             dict: Dictionary containing the account details, as returned by the API.
 
         Raises:
-            Exception: If there was an error in the GET request or if the status code is not 200 OK.
+            AccountError: If there was an error in the GET request or if the status code is not 200 OK.
         """
-        headers = {"Authorization": f"{self.session_token}"}
         response = requests.get(
-            f"{self.api_url}/customers/me/accounts/{account_number}", headers=headers
+            f"{self.url}/customers/me/accounts/{account_number}", headers=self.headers
         )
         if response.status_code == 200:
             response_data = json.loads(response.content)
             account = response_data["data"]
             return account
         else:
-            raise Exception(
-                f"Error getting account {account_number}: {response.status_code} - {response.content}"
-            )
+            self._raise_account_error(f"Error getting account {account_number}", response)
 
     def get_margin_requirements(self, account_number):
         """
@@ -103,20 +106,20 @@ class TastytradeAccount:
             dict: Dictionary containing the margin/capital requirements report, as returned by the API.
 
         Raises:
-            Exception: If there was an error in the GET request or if the status code is not 200 OK.
+            AccountError: If there was an error in the GET request or if the status code is not 200 OK.
         """
-        headers = {"Authorization": f"{self.session_token}"}
         response = requests.get(
-            f"{self.api_url}/margin/accounts/{account_number}/requirements",
-            headers=headers,
+            f"{self.url}/margin/accounts/{account_number}/requirements",
+            headers=self.headers,
         )
         if response.status_code == 200:
             response_data = json.loads(response.content)
             report = response_data["data"]
             return report
         else:
-            raise Exception(
-                f"Error getting margin requirements for account {account_number}: {response.status_code} - {response.content}"
+            self._raise_account_error(
+                f"Error getting margin requirements for account {account_number}",
+                response
             )
 
     def get_account_net_liq_history(
@@ -142,22 +145,19 @@ class TastytradeAccount:
             dict: Dictionary containing the response data, as returned by the API.
 
         Raises:
-            Exception: If there was an error in the GET request or if the status code is not 200 OK.
+            AccountError: If there was an error in the GET request or if the status code is not 200 OK.
         """
-        headers = {"Authorization": f"{self.session_token}"}
         params = {"time-back": time_back, "start-time": start_time}
         response = requests.get(
-            f"{self.api_url}/accounts/{account_number}/net-liq/history",
-            headers=headers,
+            f"{self.url}/accounts/{account_number}/net-liq/history",
+            headers=self.headers,
             params=params,
         )
         if response.status_code == 200:
             response_data = response.json()
             return response_data
         else:
-            raise Exception(
-                f"Error getting account net liq history: {response.status_code} - {response.content}"
-            )
+            self._raise_account_error("Error getting account net liq history", response)
 
     def get_effective_margin_requirements(self, account_number, underlying_symbol):
         """
@@ -176,20 +176,19 @@ class TastytradeAccount:
             dict: Dictionary containing the effective margin requirements, as returned by the API.
 
         Raises:
-            Exception: If there was an error in the GET request or if the status code is not 200 OK.
+            AccountError: If there was an error in the GET request or if the status code is not 200 OK.
         """
-        headers = {"Authorization": f"{self.session_token}"}
         response = requests.get(
-            f"{self.api_url}/accounts/{account_number}/margin-requirements/{underlying_symbol}/effective",
-            headers=headers,
+            f"{self.url}/accounts/{account_number}/margin-requirements/{underlying_symbol}/effective",
+            headers=self.headers,
         )
         if response.status_code == 200:
             response_data = response.json()
             return response_data
         else:
-            raise Exception(
-                f"Error getting effective margin requirements for account {account_number}: "
-                f"{response.status_code} - {response.content}"
+            self._raise_account_error(
+                f"Error getting effective margin requirements for account {account_number}",
+                response
             )
 
     def get_position_limit(self, account_number):
@@ -204,17 +203,17 @@ class TastytradeAccount:
             int: The position limit for the account, as returned by the API.
 
         Raises:
-            Exception: If there was an error in the GET request or if the status code is not 200 OK.
+            AccountError: If there was an error in the GET request or if the status code is not 200 OK.
         """
-        headers = {"Authorization": f"{self.session_token}"}
         response = requests.get(
-            f"{self.api_url}/accounts/{account_number}/position-limit", headers=headers
+            f"{self.url}/accounts/{account_number}/position-limit", headers=self.headers
         )
         if response.status_code == 200:
             response_data = json.loads(response.content)
             position_limit = response_data["data"]["positionLimit"]
             return position_limit
         else:
-            raise Exception(
-                f"Error getting position limit for account {account_number}: {response.status_code} - {response.content}"
+            self._raise_account_error(
+                f"Error getting position limit for account {account_number}",
+                response
             )

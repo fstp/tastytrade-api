@@ -15,11 +15,11 @@ class TastytradeAuth:
 
     def _raise_validation_error(self, response):
         raise ValidationError(
-            f"\nurl: {self.url}\n" \
-            f"session_token: {self.session_token}\n" \
-            f"user_data: {self.user_data}\n" \
-            f"status_code: {response.status_code}\n" \
-            f"reason: {response.reason}\n" \
+            f"\nurl: {self.url}\n"
+            f"session_token: {self.session_token}\n"
+            f"user_data: {self.user_data}\n"
+            f"status_code: {response.status_code}\n"
+            f"reason: {response.reason}\n"
             f"text: {response.text}")
 
     def login(self, two_factor_code: str = None) -> Dict[str, str]:
@@ -33,7 +33,7 @@ class TastytradeAuth:
             Optional[Dict[str, str]]: A dictionary containing the user's session token and other related data.
 
         Raises:
-            ValidationError: if the session is invalid or there's an error.
+            ValidationError: If the session is invalid or there's an error.
         """
         payload = {"login": self.username, "remember-me": "true"}
 
@@ -68,7 +68,7 @@ class TastytradeAuth:
             Optional[Dict[str, str]]: A dictionary containing the user data if the session is valid.
 
         Raises:
-            ValidationError: if the session is invalid or there's an error.
+            ValidationError: If the session is invalid or there's an error.
         """
         headers = {"Authorization": self.session_token}
         response = requests.post(f"{self.url}/sessions/validate", headers=headers)
@@ -84,7 +84,7 @@ class TastytradeAuth:
         Destroys the current session, logging the user out.
 
         Raises:
-            ValidationError: if the session is invalid or there's an error.
+            ValidationError: If the session is invalid or there's an error.
         """
         headers = {"Authorization": self.session_token}
         response = requests.delete(f"{self.url}/sessions", headers=headers)
@@ -105,7 +105,7 @@ class TastytradeAuth:
             Returns None if there's an error.
 
         Raises:
-            ValidationError: if the session is invalid or there's an error.
+            ValidationError: If the session is invalid or there's an error.
         """
         self.validate_session()
 
@@ -141,7 +141,7 @@ class TastytradeAuth:
             Returns None if there's an error.
 
         Raises:
-            ValidationError: if the session is invalid or there's an error.
+            ValidationError: If the session is invalid or there's an error.
         """
         payload = {
             "login": username,
